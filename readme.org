@@ -1,0 +1,10 @@
+* hex alphazero/muzero
+
+Idea is to create a strong bot using alphazero method for 11x11 hex, and see if can create a bot
+with similar strength with muzero method.
+
+Will be somewhat architected from the galvanise_zero project.  In that project, it took 3-5 days on
+3 1080 GPUs to become superhuman level on 11x11, so I think it is a good testbed for muzero.
+
+
+
