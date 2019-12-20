@@ -1,3 +1,13 @@
 # temporary/backup files
 *~
 
+# c++
+*.d
+*.o
+*.so
+
+# log files
+*.log
+
+# binary files
+*.bin
