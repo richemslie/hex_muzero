@@ -1,0 +1,88 @@
+* networks terminology
+** muZero
+*** prediction
+    f : mustate -> (policy, value)
+*** dynamics
+    g : mustate -> action -> (reward, mustate+1)
+*** representation
+    h : basestate -> mustate
+
+** alphaZero
+*** prediction
+    p : basestate -> (policy, value)
+
+
+* MCTS
+
+  As far as I can see, the mcts search is not very different between alphaZero and muZero methods.
+  Hence I am going to share the code between the two.  The biggest difference is at node expansion
+  time.  Where alphaZero/gzero uses the forward statemachine and prediction(p) network, to get the next
+  state, legals and policys/value; muZero will use:
+
+  - dynamics(g) network for next state
+  - prediction(f) network for the policy (and predicted value)
+
+** thoughts on node creation
+
+   With the prediction(f) network, we can use the policy to mask possible actions, to create a
+   legal set.  There are 3 ways (off the top of my head) to decide what actions are possible at
+   node creation time:
+
+   1. use every possible action.  Many which will not be legal.
+   2. use the policy as a mask, with any moves < 0.01% (say), are not legal actions
+   3. similar to 2, but increase the threshold to 0.5% for the not legal actions.  In this case
+      add in a randomly 3-4 from the leftover set so that anomalies/sparse actions can propagate
+      through.
+
+   Note that the root note will have the exact legal set.  At least then erroneous actions can't be
+   propagated into the data to be learned.
+
+   3 would seem the most optimial.  In the muZero psuedocode, it seems they chose 1.
+
+** gzero versus alphazero
+*** FPU
+    probably the biggest unknown how this prior will work in muZero setting.  It is configurable so
+    it can be turned it off completely, or use a very low settings.  It really doesn't matter much
+    at train time anyway.
+
+*** gzero extension: finalised, and MCTS prover.
+    Since muZero has no concept of terminal nodes, we can drop this concept.
+
+*** gzero traversals versus visits, and transpositions
+    Traversals differ from node visit, in that counts are increases along the children during
+    backProp.  This is an implementation detail due to having transpositions, that is sharing nodes
+    within the MCTS tree based on similar basestates.
+
+    Since the (mu) hidden state is an approximation of a state, it is never precise and has no concept of similarity.
+    Hance the concept of transpositions and traversals doesn't make sense in te muZero.
+
+*** the player (and to some extent self play) code was interpersed in gzero
+    possibly something that should of been refactored out earlier, but never got around to it.
+    This time MCTS class will focus on MCTS search and the self play / player will be higher level
+    classes.
+
+**** similarly verbose and dump depth, are really player concepts
+
+*** the temperature can choose action code could be simplified
+**** also drop choose top visits (since can do so with a large(small) temperature)
+
+*** keep 'noise policy squash'
+    This was an essential 'feature' of gzero when uses less 800 evals during self-play.
+    Essentially without doing enoug evals, an opinionated policy would follow itself produce an
+    unstable/overfit network.
+
+*** keep convergence code
+
+*** drop use_legals_count_draw
+    made no sense, was never used anyway
+
+*** 'balance first nodes', is a player level concept
+
+*** keep unselectables (so can batch search in player)
+
+*** keep all statistics in a runtime Statistic class
+
+*** questional gzero features
+**** policy dilution during longer searches
+**** root node limit latching
+**** remove policy dilution during backprop (can always add it back in again)
